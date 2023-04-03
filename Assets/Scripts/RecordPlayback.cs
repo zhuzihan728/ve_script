@@ -11,7 +11,7 @@ public class RecordPlayback : MonoBehaviour
     [SerializeField] Modular3DText saveText = null;
 
     // public AudioClip[] RecordedClip = new AudioClip[2];
-    public List<AudioClip> RecordedClip = new List<AudioClip>();
+    // public List<AudioClip> RecordedClip = new List<AudioClip>();
     public AudioSource audioSource;
     public Text Adress; 
     private string fileName;
@@ -26,15 +26,6 @@ public class RecordPlayback : MonoBehaviour
     public void Replay()
     {
         StartCoroutine(PlayIe(0));
-        if (RecordedClip == null)
-        {
-            Debug.Log("No recording available");
-            return;
-        }
-        audioSource.clip = RecordedClip.ToArray()[^1];
-        audioSource.Play();
-        Debug.Log("Playing recording");
-
     }
 
 
@@ -64,11 +55,20 @@ public class RecordPlayback : MonoBehaviour
 
         if (path!=null&&path.Length > 0)
         {
+            // Debug.Log("==================================");
+            // Debug.Log(GetAudiosByPath()[num]);
             UnityWebRequest _unityWebRequest = UnityWebRequestMultimedia.GetAudioClip("file://" + GetAudiosByPath()[num], AudioType.WAV);
-            yield return _unityWebRequest.SendWebRequest();
+            yield return _unityWebRequest.SendWebRequest(); 
+            while (!_unityWebRequest.downloadHandler.isDone)
+                yield return null;
+
             AudioClip _audioClip = DownloadHandlerAudioClip.GetContent(_unityWebRequest);
             // RecordedClip[0]= _audioClip;
-            RecordedClip.Add(_audioClip);
+            // RecordedClip.Add(_audioClip);
+            audioSource.clip = _audioClip;
+            audioSource.Play();
+            Debug.Log("Playing recording");
+            
         }
 
      
