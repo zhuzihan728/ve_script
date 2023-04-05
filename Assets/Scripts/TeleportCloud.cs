@@ -92,6 +92,7 @@ public class TeleportCloud : MonoBehaviour, IUseable
     public void ProcessMessage(ReferenceCountedSceneGraphMessage message)
     {
         var msg = message.FromJson<Message>(); 
+        
         if(msg.skyboxIndex == 0){
             RenderSettings.skybox = skyboxDefault;
         }

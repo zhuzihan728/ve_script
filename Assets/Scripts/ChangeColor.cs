@@ -6,7 +6,7 @@ public class ChangeColor : MonoBehaviour
 {
     public GameObject button;
     public Renderer buttonRenderer;
-    [SerializeField] private Color newColor;
+    [SerializeField] private Color newColor = Color.white;
     [SerializeField] private Color originalColor;
     // Start is called before the first frame update
     void Start()
@@ -19,16 +19,24 @@ public class ChangeColor : MonoBehaviour
     {
 
     }
-    public void ChangeColorButton()
+    public void ChangeColorButton(float duration = 0.1f)
     {
-        StartCoroutine(ChangeColorCoroutine());
+        StartCoroutine(ChangeColorCoroutine(duration));
     }
+    // public void ActivateColorforReplay()
+    // {
+    //     buttonRenderer.material.color = newColor;
+    // }
+    // public void DeactivateColorforReplay()
+    // {
+    //     buttonRenderer.material.color = originalColor;
+    // }
 
-    private IEnumerator ChangeColorCoroutine()
+    private IEnumerator ChangeColorCoroutine(float duration)
     {
         Color originalColor = buttonRenderer.material.color;
         buttonRenderer.material.color = newColor;
-        yield return new WaitForSeconds(10);
+        yield return new WaitForSeconds(duration);
         buttonRenderer.material.color = originalColor;
     }
 

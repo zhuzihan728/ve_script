@@ -13,9 +13,9 @@ public class RecordPlayback : MonoBehaviour
     // public AudioClip[] RecordedClip = new AudioClip[2];
     // public List<AudioClip> RecordedClip = new List<AudioClip>();
     public AudioSource audioSource;
-    public Text Adress; 
     private string fileName;
     private byte[] data;
+    public ChangeColor CC;
 
     private void Start()
     {
@@ -63,6 +63,7 @@ public class RecordPlayback : MonoBehaviour
                 yield return null;
 
             AudioClip _audioClip = DownloadHandlerAudioClip.GetContent(_unityWebRequest);
+            CC.ChangeColorButton(_audioClip.length);
             // RecordedClip[0]= _audioClip;
             // RecordedClip.Add(_audioClip);
             audioSource.clip = _audioClip;

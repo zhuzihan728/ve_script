@@ -17,6 +17,19 @@ public class VisualHitTips : MonoBehaviour
     [SerializeField] Modular3DText highScoreText = null;
     [SerializeField] Modular3DText TempoText = null;
     
+    public GameObject CircularWall;
+    public Vector3 CircularWallInitialPosition;
+    public Vector3 CircularWallFinalPosition;
+    public float DownOffset = 20f;
+    public GameObject CircularRing;
+    public ChangeColor Wall0;
+    public ChangeColor Wall1;
+    public ChangeColor Wall2;
+    public ChangeColor Wall3;
+    public ChangeColor Wall4;
+    public ChangeColor Wall5;
+
+    public StartStopControl SSC;
 
     public float min = 0.9f, max = 1.1f;
     public static float range = 0.1f;
@@ -31,6 +44,7 @@ public class VisualHitTips : MonoBehaviour
     public ParticleSystem particleSystem;
     public float tempo = 1f;
     public int highestScore = 0;
+    public AudioSource matchedAudio;
     
     public void Resetscore()
     {
@@ -43,45 +57,73 @@ public class VisualHitTips : MonoBehaviour
         context = NetworkScene.Register(this);
         scoreText.enabled = false;
         timeText.enabled = false;
+        highestScore = 0;
+        CircularWallFinalPosition = CircularWall.transform.position;
+        CircularWallInitialPosition = new Vector3(CircularWallFinalPosition.x, CircularWallFinalPosition.y - DownOffset, CircularWallFinalPosition.z);
+        CircularWall.SetActive(false);
+        CircularRing.SetActive(false);
     }
     public void OnPlay()
     {
-        highestScore = 0;
         time = 0;
         isRunning = true;
         scoreText.enabled = true;
         timeText.enabled = true;
         canHit = false;
+        CircularRing.SetActive(true);
+        CircularWall.SetActive(true);
         Resetscore();
     }
+
+    public void OnSlow(){
+        if(tempo < 3.0f && SSC.RecordStart == false){
+            tempo += 0.05f;
+            context.SendJson(new Message(highestScore, tempo));
+        }
+    }
+
+    public void OnFast(){
+            if(tempo > 0.5f && SSC.RecordStart == false){
+                tempo -= 0.05f;
+                context.SendJson(new Message(highestScore, tempo));
+            }
+    }
+
     public void OnStop()
     {
+        CircularRing.SetActive(false);
+        CircularWall.SetActive(false);
         isRunning = false;
         if (score > highestScore)
         {
             highestScore = score;
             highScoreText.UpdateText(highestScore.ToString());
         }
-        context.SendJson(new Message(highestScore));
+        context.SendJson(new Message(highestScore, 0f));
     }
     // Update is called once per frame
     void Update()
     {
-        TempoText.UpdateText(tempo.ToString("f2"));
+        TempoText.UpdateText((1/tempo).ToString("f2"));
         min = tempo - range;
         max = tempo + range;
         if (isRunning)
         {
+
             time += Time.deltaTime;
             timeText.UpdateText(time.ToString("f2"));
             timer = time % tempo;
+
+            // visual tips wall
+            CircularWall.transform.position = Vector3.Lerp(CircularWallInitialPosition, CircularWallFinalPosition, timer / tempo);
             if (time < 0.5f)
                 return;
             if (timer >= min|| timer< range)
             {
                 if (!isPlaying)
                 {
-                    particleSystem.Play();
+                    
+                    // particleSystem.Play();
                     canHit = true;
                     isPlaying = true;
                 }
@@ -101,6 +143,13 @@ public class VisualHitTips : MonoBehaviour
             if (time > 0.5f)
                 if (timer >= min || timer <= max-1)
                 {
+                    Wall0.ChangeColorButton();
+                    Wall1.ChangeColorButton();
+                    Wall2.ChangeColorButton();
+                    Wall3.ChangeColorButton();
+                    Wall4.ChangeColorButton();
+                    Wall5.ChangeColorButton();
+                    matchedAudio.Play();
                     list.Add(time);
                     score++;
                     scoreText.UpdateText(score.ToString());
@@ -111,16 +160,31 @@ public class VisualHitTips : MonoBehaviour
     public struct Message
     {
         public int highestScore;
+        public float tempo;
 
-        public Message(int highestScore)
+        public Message(int highestScore, float tempo)
         {
             this.highestScore = highestScore;
+            this.tempo = tempo;
         }
     }
 
     public void ProcessMessage(ReferenceCountedSceneGraphMessage message)
     {
-        var msg = message.FromJson<Message>(); 
+        
+        var msg = message.FromJson<Message>();
+        
+        if (SSC.RecordStart == true)
+        {
+            return;
+        }
+        if (msg.tempo != 0f)
+        {
+            Debug.Log("=================================="); 
+            Debug.Log(msg.tempo); 
+            tempo = msg.tempo;
+        }
+        
         if(msg.highestScore > highestScore){
             highestScore = msg.highestScore;
             highScoreText.UpdateText(highestScore.ToString());

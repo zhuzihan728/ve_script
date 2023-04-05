@@ -33,8 +33,11 @@ public class KeyPress : MonoBehaviour, IUseable
     
     public void UnUse(Hand controller)
     {
-        audioSource.Stop();
+        
+        // audioSource.Stop();
         isPlaying = false;
+        context.SendJson(new Message(InstrumentIndex, isPlaying));
+        StartCoroutine("PlaySound");
     }
 
     public void Use(Hand controller)
@@ -42,11 +45,18 @@ public class KeyPress : MonoBehaviour, IUseable
         // check player's position
         if(Vector3.Distance(GameObject.Find("Player").transform.position, transform.position) <= MAX_RANGE){
             isPlaying = true;
+            context.SendJson(new Message(InstrumentIndex, isPlaying));
             audioSource.Play();
             VHT.OnNode();
+           
         }
     }
 
+    IEnumerator PlaySound()
+    {
+        yield return new WaitForSeconds(.5f);
+        audioSource.Stop();
+    }
 
     public struct Message
     {
@@ -62,16 +72,19 @@ public class KeyPress : MonoBehaviour, IUseable
 
     private void Update()
     {   
-        context.SendJson(new Message(InstrumentIndex, isPlaying));
     }
 
     public void ProcessMessage(ReferenceCountedSceneGraphMessage message)
     {
         var msg = message.FromJson<Message>(); 
         if(msg.isPlaying == true && msg.InstrumentIndex == this.InstrumentIndex){
+            isPlaying = true;
             audioSource.Play();
             VHT.OnNode();
-            Debug.Log("msg received," + gameObject.name + "is playing a sound");
+        }
+        else if(msg.isPlaying == false && msg.InstrumentIndex == this.InstrumentIndex){
+            isPlaying = false;
+            StartCoroutine("PlaySound");
         }
     }
 }
